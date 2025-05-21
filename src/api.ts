@@ -1,0 +1,17 @@
+import type { Product } from './types/product';
+
+export const fetchProducts = async (): Promise<Product[]> => { // Promises Product[] array
+
+    const response = await fetch('https://fakestoreapi.com/products'); // Fetches products from fakestore
+
+    if (!response.ok) { // Check if the ok property of the response object is false
+        throw new Error('Network response was not ok: ${response.status} ${response.statusText}');
+    }
+
+    const data: Product[] = await response.json(); // This method 
+    // reads the response body and returns a Promise that resolves 
+    // with the JavaScript object obtained by parsing the body text 
+    // as JSON.
+
+    return data; // Fulfill the promise by returning the parsed data
+};
