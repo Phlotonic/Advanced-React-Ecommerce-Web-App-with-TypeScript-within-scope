@@ -1,22 +1,30 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts, fetchCategories } from '../api';
+import { fetchProducts, fetchCategories, fetchProductsByCategory } from '../api';
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types/product';
-
 
 // Define the Homepage component
 const Homepage = () => {
 
-  // Your existing query for all products
+  // Initialize with an empty string, which we can use to mean "All Categories"
+const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  // query for all products
   const {
     data: productsData,
     isLoading: isLoadingProducts,
     isError: isErrorProducts,
     error: errorProducts,
   } = useQuery<Product[], Error>({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryKey: ['products', selectedCategory || 'all'],
+    queryFn: async () => {
+      if (selectedCategory) {
+        return fetchProductsByCategory(selectedCategory);
+      } else {
+        return fetchProducts();
+      }
+    },
   });
 
   // Query for categories
@@ -24,16 +32,13 @@ const Homepage = () => {
     data: categoriesData, // Our string[] of categories
     isLoading: isLoadingCategories,
     isError: isErrorCategories,
-    error: errorCategories, // For error messages
+    error: errorCategories,
   } = useQuery<string[], Error>({
     queryKey: ['categories'],
     queryFn: fetchCategories,
   });
 
-  // Initialize with an empty string, which we can use to mean "All Categories"
-const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  // Combined loading state for products (as you did with Option A)
+  // Combined loading state for products
   if (isLoadingProducts || !productsData) {
     return <span>Loading products...</span>;
   }
@@ -55,7 +60,7 @@ const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     <div>
       <h1>Our Products</h1>
 
-      {/* Category Dropdown Area */}
+      {/* Category Dropdown */}
       <div>
         <label htmlFor="category-select">Filter by Category: </label>
         <select

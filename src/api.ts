@@ -26,3 +26,14 @@ export const fetchCategories = async (): Promise<string[]> => { // Returns a pro
   const data: string[] = await response.json(); // The data will be an array of strings
   return data; // Return the array of category strings
 };
+
+export const fetchProductsByCategory = async (categoryName: string): Promise<Product[]> => {
+  const response = await fetch(`https://fakestoreapi.com/products/category/${categoryName}`);
+
+  if (!response.ok) {
+    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+  }
+
+  const data: Product[] = await response.json();
+  return data;
+}
