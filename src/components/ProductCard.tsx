@@ -1,16 +1,18 @@
 import { Product } from '../types/product'; // Assuming you have product.ts
+import { useDispatch } from 'react-redux';
+import { addItem } from '../features/cart/cartSlice';
 
 interface ProductCardProps {
   product: Product; // The prop is named 'product' and its type is 'Product'
 }
 
 const ProductCard = ({ product }: ProductCardProps) => { // Destructuring 'product' from props
+  const dispatch = useDispatch(); // Get the dispatch function from the hook
 
     const handleAddToCart = () => {
-            
-            console.log("Adding to cart:", product);
-            
-            
+      // Call the addItem action creator with the product,
+      // and then pass the resulting action object to dispatch:
+      dispatch(addItem(product));            
         };
   
     return (          
