@@ -43,11 +43,15 @@ const cartSlice = createSlice({
                 state.items.push({ ...productToAdd, quantity: 1 });
             }
         },
+        removeItem: (state: CartState, action: PayloadAction<number>) => {
+            state.items = state.items.filter(item => item.id !== action.payload)
+        } // "Replace the current items array with a new array 
+        // that has filtered out the item we want to remove."
 
     }
 });
 
-export const { addItem } = cartSlice.actions;
+export const { addItem, removeItem } = cartSlice.actions;
 // to dispatch the action to the store
 export default cartSlice.reducer;
 // combine all of the slice reducers into the single main app reducer
