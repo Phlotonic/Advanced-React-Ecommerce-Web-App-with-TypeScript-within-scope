@@ -1,14 +1,34 @@
-import React from 'react';
-import Homepage from './pages/Homepage';
-import ShoppingCart from './components/shopping cart/ShoppingCart';
-import './App.css'; 
-function App() {
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import Register from "./Register";
+import Login from "./Login";
+
+const App = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div className="App">
-      <Homepage />
-      <ShoppingCart />
+    <div>
+      {user ? (
+        <div>
+          <h2>Welcome, {user.email}</h2>
+          <Login /> {/* To provide a logout button */}
+        </div>
+      ) : (
+        <>
+          <Register />
+          <Login />
+        </>
+      )}
     </div>
   );
-}
+};
 
 export default App;
