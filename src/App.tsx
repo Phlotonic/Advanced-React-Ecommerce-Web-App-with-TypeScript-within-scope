@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "./components/firebaseConfig";
-import Register from "./Register";
-import Login from "./Login";
+import { AuthProvider } from "./context/AuthContext";
+import AuthForm from "./components/auth/AuthForm";
+import Register from "./components/auth/Register";
+import Login from "./components/auth/Login";
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,20 +17,23 @@ const App = () => {
   }, []);
 
   return (
-    <div>
-      {user ? (
+    <AuthProvider>
+      <AuthForm />
         <div>
-          <h2>Welcome, {user.email}</h2>
-          <Login /> {/* To provide a logout button */}
+          {user ? (
+            <div>
+              <h2>Welcome, {user.email}</h2>
+              <Login /> {/* To provide a logout button */}
+            </div>
+          ) : (
+            <>
+              <Register />
+              <Login />
+            </>
+          )}
         </div>
-      ) : (
-        <>
-          <Register />
-          <Login />
-        </>
-      )}
-    </div>
-  );
+        </AuthProvider>
+      );
 };
 
 export default App;
