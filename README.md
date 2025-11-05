@@ -15,9 +15,11 @@ A full-featured e-commerce application built with React, TypeScript, and Firebas
 
 - **Frontend**: React 18 with TypeScript
 - **Build Tool**: Vite
-- **Backend**: Firebase (Firestore, Authentication)
-- **Styling**: [Your styling solution - CSS/Tailwind/Material-UI]
-- **State Management**: [Your state management solution - Context API/Redux/Zustand]
+- **Backend**: Firebase (Firestore v9+, Authentication)
+- **State Management**: Context API + Redux Toolkit
+- **Testing**: Jest + React Testing Library
+- **Styling**: CSS3 with responsive design
+- **Type Safety**: TypeScript with strict configuration
 
 ## 📋 Prerequisites
 
@@ -39,7 +41,8 @@ npm install
 ```
 
 3. Set up Firebase configuration:
-   - Create a `.env` file in the root directory
+   - Create a `.env.local` file in the root directory
+   - Copy the template from `FIREBASE_ENV_DOCS.md`
    - Add your Firebase configuration:
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
@@ -49,6 +52,7 @@ VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
+   - See `FIREBASE_INTEGRATION_GUIDE.md` for detailed setup instructions
 
 4. Start the development server:
 ```bash
@@ -79,19 +83,19 @@ npm run dev
 - [x] Implement login functionality
 - [x] Implement logout functionality
 
-### Part 3: User Management
-- [ ] **Create**: Add user document on registration
-- [ ] **Read**: Fetch and display user profile data
-- [ ] **Update**: Allow users to edit profile information (name, address)
-- [ ] **Delete**: Enable account deletion with data removal from Firestore
+### Part 3: User Management ✅ COMPLETED
+- [x] **Create**: Add user document on registration (createUserProfile function)
+- [x] **Read**: Fetch and display user profile data (getUserProfile function)  
+- [x] **Update**: Allow users to edit profile information (updateUserProfile function) - *Implemented via TDD*
+- [x] **Delete**: Enable account deletion with data removal (deleteUserProfile function) - *Implemented via TDD*
 
-### Part 4: Product Management
-- [ ] Create `products` collection in Firestore
-- [ ] **Read**: Fetch and display all products from Firestore
-- [ ] **Create**: Add new products to Firestore
-- [ ] **Update**: Edit existing product details
-- [ ] **Delete**: Remove products from Firestore
-- [ ] Replace FakeStore API with Firestore integration
+### Part 4: Product Management ✅ COMPLETED  
+- [x] Create `products` collection in Firestore - *Implemented via TDD*
+- [x] **Read**: Fetch and display all products from Firestore (getProduct, getAllProducts)
+- [x] **Create**: Add new products to Firestore (createProduct function) - *Implemented via TDD*
+- [x] **Update**: Edit existing product details (updateProduct function) - *Implemented via TDD*
+- [x] **Delete**: Remove products from Firestore (deleteProduct function) - *Implemented via TDD*
+- [x] Replace FakeStore API with Firestore integration - *API functions ready for UI integration*
 
 ### Part 5: Order Management
 - [ ] Store cart/order data in Firebase when users place orders
@@ -106,13 +110,21 @@ npm run dev
 
 ```
 src/
-├── components/         # React components
-├── contexts/          # Context providers
-├── firebase/          # Firebase configuration and utilities
-├── hooks/             # Custom React hooks
+├── components/          # React components
+│   ├── auth/           # Authentication components
+│   ├── profile/        # User profile components  
+│   └── shopping cart/  # Shopping cart components
+├── config/             # Configuration files
+│   └── firebase.ts     # Firebase setup and initialization
+├── context/            # React context providers
+│   └── AuthContext.tsx # Authentication state management
+├── features/           # Redux Toolkit features
+│   └── cart/          # Cart state management
 ├── pages/             # Page components
 ├── types/             # TypeScript type definitions
 ├── utils/             # Utility functions
+│   ├── userApi.ts     # User CRUD operations
+│   └── __tests__/     # Unit tests
 └── App.tsx            # Main application component
 ```
 
@@ -158,20 +170,57 @@ src/
 }
 ```
 
+## 🧪 Test-Driven Development (TDD)
+
+This project follows TDD principles for implementing new features:
+
+### TDD Workflow:
+1. **Red**: Write failing tests for desired functionality
+2. **Green**: Write minimal code to make tests pass  
+3. **Refactor**: Improve code quality while keeping tests green
+
+### Current Test Coverage:
+- ✅ **User API Functions**: Complete CRUD operations (create, read, update, delete)
+- ✅ **Product API Functions**: Complete CRUD operations (create, read, update, delete)  
+- ✅ **Firebase Integration**: Proper mocking and error handling for all operations
+- ✅ **TDD Implementation**: Red-Green-Refactor cycle followed for all new features
+- 📋 **Order Management**: Upcoming TDD implementation
+- 📋 **UI Components**: Integration testing with API functions
+
+### Running Tests:
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
 ## 🚧 Development Status
 
-**Current Phase**: Implementing User and Product Management (Parts 3-4)
+**Current Phase**: Implementing Order Management and UI Integration (Part 5)
 
-**Completed**:
-- Firebase project setup and configuration
-- User authentication (registration, login, logout)
+**Recently Completed** ✅:
+- **Firebase Configuration Modernization**: Migrated to Firebase v9+ modular SDK
+- **Code Documentation**: Added comprehensive JSDoc comments and guides
+- **User Management CRUD**: Complete user profile operations (userApi.ts) - *TDD Implementation*
+- **Product Management CRUD**: Complete product operations (productApi.ts) - *TDD Implementation*
+- **Test-Driven Development**: Red-Green-Refactor cycle for all API functions
+- **TypeScript Integration**: Strict type safety throughout Firebase integration
+- **Environment Setup**: Proper `.env.local` configuration with documentation
 
-**In Progress**:
-- User profile CRUD operations
-- Product management system migration to Firestore
+**In Progress** 🚧:
+- Order management API implementation using TDD
+- UI component integration with API functions
+- Shopping cart persistence with Firebase
 
-**Upcoming**:
-- Order management and history functionality
+**Upcoming** 📋:
+- Order history and tracking functionality
+- Advanced product filtering and search
+- Performance optimizations and caching
 
 ## 🤝 Contributing
 

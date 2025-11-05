@@ -12,7 +12,7 @@
 // Import Firestore database instance from Firebase configuration
 import { db } from '../config/firebase';
 // Import Firestore v9+ modular functions for document operations
-import { collection, doc, setDoc, getDoc, DocumentData } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, DocumentData } from 'firebase/firestore';
 
 /**
  * User Profile Data Interface
@@ -104,4 +104,73 @@ export async function getUserProfile(id: string): Promise<UserProfile | null> {
     // Document doesn't exist, return null to indicate user not found
     return null;
   }
+}
+
+/**
+ * Updates an existing user profile in Firestore with partial data
+ * 
+ * This function allows updating specific fields of a user profile without
+ * affecting other fields. It uses Firestore's updateDoc function for efficient
+ * partial updates rather than overwriting the entire document.
+ * 
+ * @param id - Unique identifier of the user to update
+ * @param updateData - Object containing only the fields to update
+ * @returns Promise<Partial<UserProfile>> - Returns the updated data for confirmation
+ * @throws Will throw an error if the Firestore update operation fails
+ * 
+ * @example
+ * ```typescript
+ * // Update only the name field
+ * const result = await updateUserProfile('user123', { name: 'New Name' });
+ * 
+ * // Update multiple fields
+ * const result = await updateUserProfile('user123', {
+ *   name: 'John Doe',
+ *   address: '456 Updated Street'
+ * });
+ * ```
+ */
+export async function updateUserProfile(
+  id: string, 
+  updateData: Partial<UserProfile>
+): Promise<Partial<UserProfile>> {
+  // Create a reference to the specific user document
+  const userRef = doc(db, 'users', id);
+  
+  // Update only the specified fields in Firestore
+  await updateDoc(userRef, updateData);
+  
+  // Return the updated data for confirmation
+  return updateData;
+}
+
+/**
+ * Deletes a user profile from Firestore
+ * 
+ * This function permanently removes a user document from the 'users' collection.
+ * This operation is irreversible, so it should be used with caution and proper
+ * user confirmation in the UI.
+ * 
+ * @param id - Unique identifier of the user to delete
+ * @returns Promise<boolean> - Returns true if deletion was successful
+ * @throws Will throw an error if the Firestore delete operation fails
+ * 
+ * @example
+ * ```typescript
+ * // Delete a user profile
+ * const success = await deleteUserProfile('user123');
+ * if (success) {
+ *   console.log('User profile deleted successfully');
+ * }
+ * ```
+ */
+export async function deleteUserProfile(id: string): Promise<boolean> {
+  // Create a reference to the specific user document
+  const userRef = doc(db, 'users', id);
+  
+  // Delete the document from Firestore
+  await deleteDoc(userRef);
+  
+  // Return true to confirm successful deletion
+  return true;
 }

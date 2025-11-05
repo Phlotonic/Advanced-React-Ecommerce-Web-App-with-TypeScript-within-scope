@@ -11,9 +11,9 @@
  */
 
 // Import the functions we want to test
-import { createUserProfile, getUserProfile } from '../userApi';
+import { createUserProfile, getUserProfile, updateUserProfile, deleteUserProfile } from '../userApi';
 // Import Firestore functions that we need to mock
-import { setDoc, getDoc, doc } from 'firebase/firestore';
+import { setDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 /**
  * Mock the Firebase configuration module
@@ -32,13 +32,17 @@ jest.mock('firebase/firestore', () => ({
     collection: jest.fn(),  // Mock collection reference creation
     doc: jest.fn(),         // Mock document reference creation
     setDoc: jest.fn(),      // Mock document write operations
-    getDoc: jest.fn()       // Mock document read operations
+    getDoc: jest.fn(),      // Mock document read operations
+    updateDoc: jest.fn(),   // Mock document update operations
+    deleteDoc: jest.fn()    // Mock document delete operations
 }));
 
 // Create typed mock functions for better TypeScript support and IntelliSense
 const mockSetDoc = setDoc as jest.MockedFunction<typeof setDoc>;
 const mockGetDoc = getDoc as jest.MockedFunction<typeof getDoc>;
 const mockDoc = doc as jest.MockedFunction<typeof doc>;
+const mockUpdateDoc = updateDoc as jest.MockedFunction<typeof updateDoc>;
+const mockDeleteDoc = deleteDoc as jest.MockedFunction<typeof deleteDoc>;
 
 /**
  * Test Suite: createUserProfile Function
@@ -137,5 +141,112 @@ describe('getUserProfile', () => {
         
         // Assert: Verify that Firestore getDoc was still called
         expect(mockGetDoc).toHaveBeenCalled();
+    });
+});
+
+/**
+ * TDD Test Suite: User Profile Update Functionality
+ * 
+ * These tests were written first (Red phase) to define the expected behavior
+ * for updating user profiles in Firestore. The implementation has now been written
+ * to make these tests pass (Green phase).
+ */
+describe('updateUserProfile', () => {
+    beforeEach(() => {
+        // Reset all mocks before each test
+        mockUpdateDoc.mockReset();
+        mockDoc.mockReset();
+    });
+
+    /**
+     * Test Case: Successfully updates user profile with partial data
+     * 
+     * Verifies that the function can update specific fields of a user profile
+     * without affecting other fields (partial update functionality).
+     */
+    it('updates user profile with partial data', async () => {
+        // Arrange: Set up mock behaviors
+        mockUpdateDoc.mockResolvedValue(undefined);
+        mockDoc.mockReturnValue({} as any);
+        
+        // Prepare test data for partial update
+        const userId = 'user123';
+        const updateData = { name: 'John Updated', address: '456 New Street' };
+        
+        // Act: Call the updateUserProfile function
+        const result = await updateUserProfile(userId, updateData);
+        
+        // Assert: Verify the function calls Firestore correctly and returns expected data
+        expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'users', userId);
+        expect(mockUpdateDoc).toHaveBeenCalledWith({}, updateData);
+        expect(result).toEqual(updateData);
+    });
+
+    /**
+     * Test Case: Handles update errors gracefully
+     * 
+     * Verifies that the function properly handles and throws errors when
+     * Firestore update operations fail.
+     */
+    it('throws error when update fails', async () => {
+        // Arrange: Set up failure scenario
+        mockUpdateDoc.mockRejectedValue(new Error('Firestore update failed'));
+        mockDoc.mockReturnValue({} as any);
+        
+        // Act & Assert: Verify error is properly thrown
+        await expect(
+            updateUserProfile('user123', { name: 'Test' })
+        ).rejects.toThrow('Firestore update failed');
+    });
+});
+
+/**
+ * TDD Test Suite: User Profile Delete Functionality
+ * 
+ * These tests were written first (Red phase) to define the expected behavior
+ * for deleting user profiles from Firestore. The implementation has now been
+ * written to make these tests pass (Green phase).
+ */
+describe('deleteUserProfile', () => {
+    beforeEach(() => {
+        // Reset mocks before each test
+        mockDeleteDoc.mockReset();
+        mockDoc.mockReset();
+    });
+
+    /**
+     * Test Case: Successfully deletes user profile
+     * 
+     * Verifies that the function properly removes a user document
+     * from Firestore and confirms the operation.
+     */
+    it('deletes user profile successfully', async () => {
+        // Arrange: Set up mock behaviors
+        mockDeleteDoc.mockResolvedValue(undefined);
+        mockDoc.mockReturnValue({} as any);
+        
+        // Act: Call the deleteUserProfile function
+        const result = await deleteUserProfile('user123');
+        
+        // Assert: Verify proper Firestore calls and return value
+        expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'users', 'user123');
+        expect(mockDeleteDoc).toHaveBeenCalledWith({});
+        expect(result).toBe(true); // Expect confirmation of successful deletion
+    });
+
+    /**
+     * Test Case: Handles delete errors gracefully
+     * 
+     * Verifies that delete failures are properly caught and handled.
+     */
+    it('throws error when delete fails', async () => {
+        // Arrange: Set up failure scenario
+        mockDeleteDoc.mockRejectedValue(new Error('Delete operation failed'));
+        mockDoc.mockReturnValue({} as any);
+        
+        // Act & Assert: Verify error handling
+        await expect(
+            deleteUserProfile('user123')
+        ).rejects.toThrow('Delete operation failed');
     });
 });
