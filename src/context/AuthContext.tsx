@@ -11,7 +11,7 @@
  */
 
 import React, { useContext, createContext, useEffect, useState } from "react";
-// Import Firebase auth instance from our configuration
+// Import Firebase auth and db instances from our configuration
 import { auth } from "../config/firebase";
 // Import Firebase Auth v9+ functions and types
 import {
@@ -22,6 +22,7 @@ import {
   createUserWithEmailAndPassword,   // User registration
   signOut                          // Sign-out function
 } from "firebase/auth";
+import { createUserProfile } from "../utils/userApi"; // User profile creation function
 
 /**
  * Authentication Context Type Definition
@@ -29,7 +30,7 @@ import {
  * Defines the shape of the authentication context that will be provided
  * to consuming components throughout the application
  */
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;                                                    // Current authenticated user or null
   login: (email: string, password: string) => Promise<UserCredential>;  // Login function
   logout: () => Promise<void>;                                          // Logout function
@@ -106,13 +107,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * 
    * Creates a new user account with email and password using Firebase Auth.
    * The new user will be automatically signed in after successful registration.
+   * Also creates a complete user profile in Firestore with all required fields.
    * 
    * @param email - New user's email address
    * @param password - New user's password
    * @returns Promise<UserCredential> - Firebase auth result with new user info
    */
   const register = async (email: string, password: string): Promise<UserCredential> => {
-    return createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Create a complete user profile in Firestore with all required fields
+    await createUserProfile(user.uid, email);
+    
+    return userCredential;
   };
 
   // Provide authentication context value to all child components

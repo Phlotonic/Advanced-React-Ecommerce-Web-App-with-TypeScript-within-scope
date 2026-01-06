@@ -19,80 +19,102 @@ import Register from "./Register";
  * Modern styling with CSS-in-JS for futuristic authentication interface
  */
 const styles = {
-  // Parallax background container
+  // Parallax background container with black/gold theme
   container: {
     minHeight: '100vh',
+    width: '100%',
     background: `
-      linear-gradient(135deg, #667eea 0%, #764ba2 100%),
-      linear-gradient(45deg, #f093fb 0%, #f5576c 100%),
-      linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)
+      radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+      linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%)
     `,
-    backgroundSize: '400% 400%, 200% 200%, 300% 300%',
-    animation: 'gradientShift 15s ease infinite',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative' as const,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    padding: '20px',
+    boxSizing: 'border-box' as const
   },
 
-  // Floating geometric shapes for parallax effect
+  // Parallax gradient overlay that follows cursor
+  parallaxOverlay: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'radial-gradient(circle 800px at var(--x, 50%) var(--y, 50%), rgba(255, 215, 0, 0.05) 0%, transparent 50%)',
+    transition: 'background 0.3s ease',
+    pointerEvents: 'none' as const,
+    zIndex: 1
+  },
+
+  // Floating geometric shapes for subtle parallax effect
   floatingShapes: {
     position: 'absolute' as const,
     width: '100%',
     height: '100%',
     overflow: 'hidden',
-    pointerEvents: 'none' as const
+    pointerEvents: 'none' as const,
+    zIndex: 2
   },
 
   shape: {
     position: 'absolute' as const,
     borderRadius: '50%',
-    background: 'rgba(255, 255, 255, 0.1)',
-    animation: 'float 6s ease-in-out infinite'
+    background: 'linear-gradient(45deg, rgba(255, 215, 0, 0.03), rgba(255, 215, 0, 0.08))',
+    border: '1px solid rgba(255, 215, 0, 0.1)',
+    animation: 'floatSlow 20s ease-in-out infinite',
+    boxShadow: '0 0 20px rgba(255, 215, 0, 0.05)'
   },
 
-  // Glassmorphism card
+  // Digital glassmorphism card
   authCard: {
-    background: 'rgba(255, 255, 255, 0.125)',
+    background: 'rgba(0, 0, 0, 0.8)',
     backdropFilter: 'blur(20px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '16px',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
     boxShadow: `
-      0 25px 45px rgba(0, 0, 0, 0.1),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-      0 8px 32px rgba(31, 38, 135, 0.37)
+      0 25px 45px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 215, 0, 0.1) inset,
+      0 0 30px rgba(255, 215, 0, 0.1)
     `,
     padding: '40px',
-    width: '450px',
-    maxWidth: '90vw',
+    width: '100%',
+    maxWidth: '450px',
+    margin: '0 auto',
     transform: 'translateY(0)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    animation: 'cardFloat 4s ease-in-out infinite',
-    zIndex: 10
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    zIndex: 10,
+    position: 'relative' as const
   },
 
-  // Header styling
+  // Header styling with 16-bit theme
   header: {
     textAlign: 'center' as const,
     marginBottom: '40px'
   },
 
   title: {
-    fontSize: '32px',
+    fontSize: 'clamp(24px, 5vw, 36px)',
     fontWeight: '700',
-    background: 'linear-gradient(135deg, #ffffff, #e0e7ff)',
+    background: 'linear-gradient(135deg, #ffd700, #ffed4e, #ffd700)',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     marginBottom: '12px',
-    letterSpacing: '-0.5px'
+    letterSpacing: '2px',
+    textShadow: '0 0 20px rgba(255, 215, 0, 0.3)',
+    fontFamily: 'monospace, "Courier New"'
   },
 
   subtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: '16px',
-    fontWeight: '400'
+    color: 'rgba(255, 215, 0, 0.8)',
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontWeight: '400',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   // Form container
@@ -100,101 +122,137 @@ const styles = {
     marginBottom: '30px'
   },
 
-  // Toggle button
+  // Toggle button with digital styling
   toggleButton: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: '500',
+    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.4s ease',
     backdropFilter: 'blur(10px)',
-    textAlign: 'center' as const
-  },
-
-  toggleButtonHover: {
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2))',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+    textAlign: 'center' as const,
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px',
+    textTransform: 'uppercase' as const
   },
 
   // Logged in state
   welcomeContainer: {
     textAlign: 'center' as const,
-    color: 'white'
+    color: '#ffd700'
   },
 
   welcomeText: {
-    fontSize: '24px',
-    fontWeight: '600',
+    fontSize: 'clamp(20px, 4vw, 28px)',
+    fontWeight: '700',
     marginBottom: '20px',
-    background: 'linear-gradient(135deg, #ffffff, #e0e7ff)',
+    background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent'
+    WebkitTextFillColor: 'transparent',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px',
+    textShadow: '0 0 20px rgba(255, 215, 0, 0.3)'
   },
 
   logoutButton: {
     padding: '14px 28px',
-    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
-    border: 'none',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: '600',
+    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1))',
+    border: '2px solid rgba(255, 215, 0, 0.5)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontWeight: '700',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 8px 25px rgba(238, 90, 36, 0.3)'
+    transition: 'all 0.4s ease',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px',
+    textTransform: 'uppercase' as const,
+    boxShadow: '0 0 20px rgba(255, 215, 0, 0.2)'
   }
 };
 
-// CSS animations as a style tag
+// CSS animations as a style tag with digital/16-bit theme
 const AnimationStyles = () => (
   <style>
     {`
-      @keyframes gradientShift {
-        0%, 100% { background-position: 0% 50%, 0% 50%, 0% 50%; }
-        25% { background-position: 100% 50%, 50% 0%, 25% 75%; }
-        50% { background-position: 50% 100%, 100% 50%, 75% 25%; }
-        75% { background-position: 25% 0%, 50% 100%, 50% 50%; }
+      @keyframes floatSlow {
+        0%, 100% { 
+          transform: translateY(0px) translateX(0px); 
+          opacity: 0.1;
+        }
+        25% { 
+          transform: translateY(-40px) translateX(20px); 
+          opacity: 0.2;
+        }
+        50% { 
+          transform: translateY(-20px) translateX(-15px); 
+          opacity: 0.15;
+        }
+        75% { 
+          transform: translateY(-60px) translateX(10px); 
+          opacity: 0.25;
+        }
       }
 
-      @keyframes parallaxFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
+      @keyframes digitalGlow {
+        0%, 100% { 
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.1),
+                      0 0 0 1px rgba(255, 215, 0, 0.2) inset;
+        }
+        50% { 
+          box-shadow: 0 0 30px rgba(255, 215, 0, 0.2),
+                      0 0 0 2px rgba(255, 215, 0, 0.3) inset;
+        }
       }
 
-      @keyframes cardFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-      }
-
-      @keyframes float {
-        0%, 100% { transform: translateY(0px); opacity: 0.3; }
-        33% { transform: translateY(-30px); opacity: 0.6; }
-        66% { transform: translateY(-15px); opacity: 0.4; }
+      .auth-card {
+        animation: digitalGlow 3s ease-in-out infinite;
       }
 
       .auth-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 35px 60px rgba(0, 0, 0, 0.15),
-                    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
-                    0 12px 40px rgba(31, 38, 135, 0.5);
+        transform: translateY(-3px);
+        border-color: rgba(255, 215, 0, 0.6);
+        box-shadow: 0 35px 60px rgba(0, 0, 0, 0.7),
+                    0 0 0 2px rgba(255, 215, 0, 0.3) inset,
+                    0 0 40px rgba(255, 215, 0, 0.2);
       }
 
       .toggle-btn:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+        border-color: rgba(255, 215, 0, 0.6);
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
       }
 
       .logout-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 30px rgba(238, 90, 36, 0.4);
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.2));
+        border-color: rgba(255, 215, 0, 0.8);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .auth-card {
+          padding: 20px !important;
+          margin: 10px !important;
+          max-width: 95vw !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .auth-card {
+          padding: 15px !important;
+          border-radius: 12px !important;
+        }
       }
     `}
   </style>
@@ -203,28 +261,37 @@ const AnimationStyles = () => (
 const AuthForm: React.FC = () => {
   const { user, logout } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
 
-  // Mouse tracking for parallax effect
+  // Mouse tracking for cursor-following parallax gradient
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100
-      });
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      
+      setMousePosition({ x, y });
+      
+      // Update CSS custom properties for the parallax gradient
+      document.documentElement.style.setProperty('--x', `${x}%`);
+      document.documentElement.style.setProperty('--y', `${y}%`);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      // Reset to center when component unmounts
+      document.documentElement.style.setProperty('--x', '50%');
+      document.documentElement.style.setProperty('--y', '50%');
+    };
   }, []);
 
-  // Generate floating shapes for parallax background
+  // Generate subtle floating shapes for background ambiance
   const FloatingShapes = () => {
     const shapes = [];
-    for (let i = 0; i < 15; i++) {
-      const size = Math.random() * 100 + 20;
-      const delay = Math.random() * 6;
-      const duration = Math.random() * 4 + 4;
+    for (let i = 0; i < 8; i++) { // Reduced from 15 to 8 for subtlety
+      const size = Math.random() * 120 + 60; // Larger, more subtle shapes
+      const delay = Math.random() * 10 + 5; // Slower start delays
+      const duration = Math.random() * 10 + 15; // Much slower animations (15-25s)
       
       shapes.push(
         <div
@@ -237,7 +304,8 @@ const AuthForm: React.FC = () => {
             top: `${Math.random() * 100}%`,
             animationDelay: `${delay}s`,
             animationDuration: `${duration}s`,
-            transform: `translate(${mousePosition.x * 0.005}px, ${mousePosition.y * 0.005}px)`
+            // Subtle parallax movement based on cursor
+            transform: `translate(${mousePosition.x * 0.002}px, ${mousePosition.y * 0.002}px)`
           }}
         />
       );
@@ -250,6 +318,7 @@ const AuthForm: React.FC = () => {
       <>
         <AnimationStyles />
         <div style={styles.container}>
+          <div style={styles.parallaxOverlay} />
           <FloatingShapes />
           <div style={styles.authCard} className="auth-card">
             <div style={styles.welcomeContainer}>
@@ -274,16 +343,17 @@ const AuthForm: React.FC = () => {
     <>
       <AnimationStyles />
       <div style={styles.container}>
+        <div style={styles.parallaxOverlay} />
         <FloatingShapes />
         <div style={styles.authCard} className="auth-card">
           <div style={styles.header}>
             <h1 style={styles.title}>
-              {showRegister ? 'Join Quantumis' : 'Welcome Back'}
+              {showRegister ? 'Join Us' : 'Welcome Back'}
             </h1>
             <p style={styles.subtitle}>
               {showRegister 
-                ? 'Access modular software components & consultation services' 
-                : 'Build better software with our fractally structured solutions'}
+                ? 'Create your account to start shopping' 
+                : 'Sign in to your account'}
             </p>
           </div>
           

@@ -1,182 +1,352 @@
 /**
- * Product API Utilities for Firestore Operations
+ * Product API Functions
  * 
- * This module provides functions for managing product data in Firestore database.
- * It handles CRUD operations for products including creation, retrieval, updates,
- * and deletion. Implemented using Test Driven Development (TDD).
+ * Complete CRUD operations for product management in Firestore as required by assignment.
+ * Replaces FakeStore API with full Firestore integration for product catalog.
  * 
- * @fileoverview Product management with Firestore v9+ SDK
- * @author Your Team  
+ * @fileoverview Product management API functions for Firebase Firestore  
  * @version 1.0.0
  */
 
-// Import Firestore database instance from Firebase configuration
 import { db } from '../config/firebase';
-// Import Firestore v9+ modular functions for document operations
 import { 
-    collection, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    getDocs, 
-    updateDoc, 
-    deleteDoc, 
-    DocumentData,
-    QuerySnapshot 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp,
+  addDoc 
 } from 'firebase/firestore';
+import type { Product } from '../types/product';
 
 /**
- * Product Data Interface
- * Defines the structure of product data stored in Firestore
+ * Creates a new product in Firestore
+ * 
+ * @param productData - Product data to create
+ * @returns Promise<string> - Returns the created product ID
+ * @throws Error if product creation fails
  */
-export interface Product {
-    id: string;          // Unique product identifier
-    name: string;        // Product name/title
-    price: number;       // Product price in USD
-    description: string; // Detailed product description
-    image: string;       // Product image URL
-    category: string;    // Product category
-    stock: number;       // Available inventory count
-}
+export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  try {
+    const now = new Date();
+    
+    const product: Omit<Product, 'id'> = {
+      ...productData,
+      createdAt: now,
+      updatedAt: now,
+      active: true,
+      tags: productData.tags || []
+    };
+    
+    // Add product to collection (auto-generate ID)
+    const docRef = await addDoc(collection(db, 'products'), product);
+    
+    console.log('✅ Product created successfully with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('❌ Error creating product:', error);
+    throw error;
+  }
+};
 
 /**
- * Creates a new product document in Firestore
+ * Creates a product with custom ID
  * 
- * @param productData - Complete product information to store
- * @returns Promise<Product> - Returns the created product data
- * @throws Will throw an error if the Firestore write operation fails
- * 
- * @example
- * ```typescript
- * const newProduct = await createProduct({
- *   id: 'prod123',
- *   name: 'Wireless Headphones',
- *   price: 99.99,
- *   description: 'High-quality wireless headphones',
- *   image: 'https://example.com/headphones.jpg',
- *   category: 'Electronics',
- *   stock: 50
- * });
- * ```
+ * @param productId - Custom product ID
+ * @param productData - Product data
+ * @returns Promise that resolves when product is created
  */
-export async function createProduct(productData: Product): Promise<Product> {
-    // Create a reference to the specific product document in 'products' collection
-    const productRef = doc(db, 'products', productData.id);
+export const createProductWithId = async (
+  productId: string,
+  productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<void> => {
+  try {
+    const now = new Date();
     
-    // Write the product document to Firestore
-    await setDoc(productRef, productData);
+    const product: Omit<Product, 'id'> = {
+      ...productData,
+      createdAt: now,
+      updatedAt: now,
+      active: true,
+      tags: productData.tags || []
+    };
     
-    // Return the created product data for confirmation
-    return productData;
-}
+    const productDocRef = doc(db, 'products', productId);
+    await setDoc(productDocRef, product);
+    
+    console.log('✅ Product created with custom ID:', productId);
+  } catch (error) {
+    console.error('❌ Error creating product with custom ID:', error);
+    throw error;
+  }
+};
 
 /**
- * Retrieves a single product from Firestore by ID
+ * Retrieves a single product by ID
  * 
- * @param id - Unique identifier of the product to retrieve
- * @returns Promise<Product | null> - Returns product data or null if not found
- * @throws Will throw an error if the Firestore read operation fails
- * 
- * @example
- * ```typescript
- * const product = await getProduct('prod123');
- * if (product) {
- *   console.log('Product found:', product.name);
- * }
- * ```
+ * @param productId - Product ID to fetch
+ * @returns Promise<Product | null> - Product data or null if not found
+ * @throws Error if retrieval fails
  */
-export async function getProduct(id: string): Promise<Product | null> {
-    // Create a reference to the specific product document
-    const docRef = doc(db, 'products', id);
+export const getProduct = async (productId: string): Promise<Product | null> => {
+  try {
+    const productDocRef = doc(db, 'products', productId);
+    const docSnap = await getDoc(productDocRef);
     
-    // Attempt to fetch the document from Firestore
-    const docSnap = await getDoc(docRef);
-    
-    // Check if document exists and return data or null
     if (docSnap.exists()) {
-        return docSnap.data() as Product;
-    } else {
-        return null;
+      const data = docSnap.data() as Omit<Product, 'id'>;
+      
+      // Convert Firestore Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      
+      return {
+        id: docSnap.id,
+        ...data
+      } as Product;
     }
-}
+    
+    console.log('Product not found with ID:', productId);
+    return null;
+  } catch (error) {
+    console.error('❌ Error fetching product:', error);
+    throw error;
+  }
+};
 
 /**
  * Retrieves all products from Firestore
  * 
- * @returns Promise<Product[]> - Returns array of all products
- * @throws Will throw an error if the Firestore read operation fails
- * 
- * @example
- * ```typescript
- * const allProducts = await getAllProducts();
- * console.log(`Found ${allProducts.length} products`);
- * ```
+ * @param activeOnly - If true, only return active products
+ * @returns Promise<Product[]> - Array of all products
+ * @throws Error if retrieval fails
  */
-export async function getAllProducts(): Promise<Product[]> {
-    // Get all documents from the 'products' collection
-    const querySnapshot = await getDocs(collection(db, 'products'));
+export const getAllProducts = async (activeOnly: boolean = true): Promise<Product[]> => {
+  try {
+    const productsCollection = collection(db, 'products');
+    let querySnapshot;
     
-    // Map Firestore documents to Product objects
-    const products = querySnapshot.docs.map((doc) => ({
+    if (activeOnly) {
+      const q = query(productsCollection, where('active', '==', true));
+      querySnapshot = await getDocs(q);
+    } else {
+      querySnapshot = await getDocs(productsCollection);
+    }
+    
+    const products: Product[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as Omit<Product, 'id'>;
+      
+      // Convert Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      
+      products.push({
         id: doc.id,
-        ...doc.data()
-    })) as Product[];
+        ...data
+      } as Product);
+    });
     
+    console.log(`✅ Retrieved ${products.length} products`);
     return products;
-}
+  } catch (error) {
+    console.error('❌ Error fetching all products:', error);
+    throw error;
+  }
+};
 
 /**
- * Updates an existing product in Firestore with partial data
+ * Updates an existing product in Firestore
  * 
- * @param id - Unique identifier of the product to update
- * @param updateData - Object containing only the fields to update
- * @returns Promise<Partial<Product>> - Returns the updated data
- * @throws Will throw an error if the Firestore update operation fails
- * 
- * @example
- * ```typescript
- * const updated = await updateProduct('prod123', {
- *   price: 79.99,
- *   stock: 25
- * });
- * ```
+ * @param productId - Product ID to update
+ * @param updates - Partial product data to update
+ * @returns Promise that resolves when update is complete
+ * @throws Error if update fails
  */
-export async function updateProduct(
-    id: string, 
-    updateData: Partial<Product>
-): Promise<Partial<Product>> {
-    // Create a reference to the specific product document
-    const productRef = doc(db, 'products', id);
+export const updateProduct = async (
+  productId: string,
+  updates: Partial<Product>
+): Promise<void> => {
+  try {
+    const productDocRef = doc(db, 'products', productId);
     
-    // Update only the specified fields in Firestore
-    await updateDoc(productRef, updateData);
+    const updateData = {
+      ...updates,
+      updatedAt: new Date()
+    };
     
-    // Return the updated data for confirmation
-    return updateData;
-}
+    // Remove id field if present (can't update document ID)
+    if ('id' in updateData) {
+      delete updateData.id;
+    }
+    
+    await updateDoc(productDocRef, updateData);
+    
+    console.log('✅ Product updated successfully:', productId);
+  } catch (error) {
+    console.error('❌ Error updating product:', error);
+    throw error;
+  }
+};
+
+/**
+ * Retrieves products by category
+ * 
+ * @param category - Product category to filter by
+ * @param activeOnly - If true, only return active products
+ * @returns Promise<Product[]> - Array of products in category
+ */
+export const getProductsByCategory = async (
+  category: string,
+  activeOnly: boolean = true
+): Promise<Product[]> => {
+  try {
+    const productsCollection = collection(db, 'products');
+    let q;
+    
+    if (activeOnly) {
+      q = query(
+        productsCollection,
+        where('category', '==', category),
+        where('active', '==', true)
+      );
+    } else {
+      q = query(productsCollection, where('category', '==', category));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    
+    const products: Product[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as Omit<Product, 'id'>;
+      
+      // Convert Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      
+      products.push({
+        id: doc.id,
+        ...data
+      } as Product);
+    });
+    
+    console.log(`✅ Retrieved ${products.length} products in category: ${category}`);
+    return products;
+  } catch (error) {
+    console.error('❌ Error fetching products by category:', error);
+    throw error;
+  }
+};
 
 /**
  * Deletes a product from Firestore
  * 
- * @param id - Unique identifier of the product to delete
- * @returns Promise<boolean> - Returns true if deletion was successful
- * @throws Will throw an error if the Firestore delete operation fails
- * 
- * @example
- * ```typescript
- * const success = await deleteProduct('prod123');
- * if (success) {
- *   console.log('Product deleted successfully');
- * }
- * ```
+ * @param productId - Product ID to delete
+ * @returns Promise that resolves when deletion is complete
+ * @throws Error if deletion fails
  */
-export async function deleteProduct(id: string): Promise<boolean> {
-    // Create a reference to the specific product document
-    const productRef = doc(db, 'products', id);
+export const deleteProduct = async (productId: string): Promise<void> => {
+  try {
+    const productDocRef = doc(db, 'products', productId);
+    await deleteDoc(productDocRef);
     
-    // Delete the document from Firestore
-    await deleteDoc(productRef);
+    console.log('✅ Product deleted permanently:', productId);
+  } catch (error) {
+    console.error('❌ Error deleting product:', error);
+    throw error;
+  }
+};
+
+/**
+ * Search products by title or description
+ * 
+ * @param searchTerm - Term to search for
+ * @param activeOnly - If true, only return active products
+ * @returns Promise<Product[]> - Array of matching products
+ */
+export const searchProducts = async (
+  searchTerm: string,
+  activeOnly: boolean = true
+): Promise<Product[]> => {
+  try {
+    // Note: Firestore doesn't support full-text search natively
+    // This is a basic implementation - for production, consider using Algolia or similar
+    const allProducts = await getAllProducts(activeOnly);
     
-    // Return true to confirm successful deletion
-    return true;
-}
+    const searchLower = searchTerm.toLowerCase();
+    const matchingProducts = allProducts.filter(product =>
+      product.title.toLowerCase().includes(searchLower) ||
+      product.description.toLowerCase().includes(searchLower) ||
+      (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchLower))) ||
+      (product.brand && product.brand.toLowerCase().includes(searchLower))
+    );
+    
+    console.log(`✅ Found ${matchingProducts.length} products matching: ${searchTerm}`);
+    return matchingProducts;
+  } catch (error) {
+    console.error('❌ Error searching products:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all unique categories
+ * 
+ * @returns Promise<string[]> - Array of category names
+ */
+export const getAllCategories = async (): Promise<string[]> => {
+  try {
+    const products = await getAllProducts(true);
+    const categories = [...new Set(products.map(product => product.category))];
+    
+    console.log(`✅ Retrieved ${categories.length} categories`);
+    return categories.sort();
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    throw error;
+  }
+};
+
+/**
+ * Validates product data before operations
+ * 
+ * @param product - Product data to validate
+ * @returns boolean - True if valid, false otherwise
+ */
+export const validateProduct = (product: Partial<Product>): boolean => {
+  if (!product.title || product.title.trim().length === 0) {
+    console.error('Validation failed: Product title is required');
+    return false;
+  }
+  
+  if (!product.price || product.price <= 0) {
+    console.error('Validation failed: Valid price is required');
+    return false;
+  }
+  
+  if (!product.category || product.category.trim().length === 0) {
+    console.error('Validation failed: Product category is required');
+    return false;
+  }
+  
+  return true;
+};

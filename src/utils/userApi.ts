@@ -1,176 +1,316 @@
 /**
- * User API Utilities for Firestore Operations
+ * User API Functions
  * 
- * This module provides functions for managing user profiles in Firestore database.
- * It handles CRUD operations for user data including creation, retrieval, and validation.
+ * Complete CRUD operations for user management in Firestore as required by assignment.
+ * Handles user profile creation on registration, reading, updating, and account deletion.
  * 
- * @fileoverview User profile management with Firestore v9+ SDK
- * @author Your Team
+ * @fileoverview User management API functions for Firebase Firestore  
  * @version 1.0.0
  */
 
-// Import Firestore database instance from Firebase configuration
 import { db } from '../config/firebase';
-// Import Firestore v9+ modular functions for document operations
-import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, DocumentData } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDocs,
+  query,
+  where,
+  Timestamp 
+} from 'firebase/firestore';
+import { deleteUser, User } from 'firebase/auth';
 
 /**
- * User Profile Data Interface
- * Defines the structure of user profile data stored in Firestore
+ * Enhanced User Profile Interface for Assignment Requirements
  */
 export interface UserProfile {
-  id: string;      // Unique user identifier (typically Firebase Auth UID)
-  email: string;   // User's email address
-  name: string;    // User's display name
-  address: string; // User's physical address for shipping
+  uid: string;
+  email: string;
+  displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  preferences?: {
+    notifications: boolean;
+    newsletter: boolean;
+    theme: 'light' | 'dark' | 'auto';
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
  * Creates a new user profile document in Firestore
+ * Called automatically during user registration
  * 
- * This function stores user profile information in the 'users' collection
- * using the provided user ID as the document ID. If a document with the same ID
- * already exists, it will be overwritten.
- * 
- * @param id - Unique identifier for the user (typically Firebase Auth UID)
- * @param email - User's email address from authentication
- * @param name - User's display name or full name
- * @param address - User's shipping/billing address
- * @returns Promise<UserProfile> - Returns the created user profile data
- * @throws Will throw an error if the Firestore write operation fails
- * 
- * @example
- * ```typescript
- * const profile = await createUserProfile(
- *   'abc123',
- *   'user@example.com',
- *   'John Doe',
- *   '123 Main St, City, State'
- * );
- * console.log('Created profile:', profile);
- * ```
+ * @param uid - Firebase Auth user ID
+ * @param email - User's email address
+ * @param displayName - User's display name (optional)
+ * @returns Promise that resolves when profile is created
+ * @throws Error if profile creation fails
  */
-export async function createUserProfile(
-  id: string, 
+export const createUserProfile = async (
+  uid: string, 
   email: string, 
-  name: string, 
-  address: string
-): Promise<UserProfile> {
-  // Create a reference to the specific user document in the 'users' collection
-  const userRef = doc(db, 'users', id);
-  
-  // Prepare the user profile data object
-  const data: UserProfile = { id, email, name, address };
-  
-  // Write the document to Firestore (creates or overwrites existing document)
-  await setDoc(userRef, data);
-  
-  // Return the created profile data for confirmation
-  return data;
-}
-
-/**
- * Retrieves a user profile from Firestore by user ID
- * 
- * This function fetches user profile data from the 'users' collection
- * using the provided user ID. Returns null if the user profile doesn't exist.
- * 
- * @param id - Unique identifier of the user to retrieve
- * @returns Promise<UserProfile | null> - Returns user profile data or null if not found
- * @throws Will throw an error if the Firestore read operation fails
- * 
- * @example
- * ```typescript
- * const profile = await getUserProfile('abc123');
- * if (profile) {
- *   console.log('User found:', profile.name);
- * } else {
- *   console.log('User not found');
- * }
- * ```
- */
-export async function getUserProfile(id: string): Promise<UserProfile | null> {
-  // Create a reference to the specific user document
-  const docRef = doc(db, 'users', id);
-  
-  // Attempt to fetch the document from Firestore
-  const docSnap = await getDoc(docRef);
-  
-  // Check if the document exists and return data or null accordingly
-  if (docSnap.exists()) {
-    // Type assertion to ensure returned data matches UserProfile interface
-    return docSnap.data() as UserProfile;
-  } else {
-    // Document doesn't exist, return null to indicate user not found
-    return null;
+  displayName?: string
+): Promise<void> => {
+  try {
+    const now = new Date();
+    
+    const userData: UserProfile = {
+      uid,
+      email,
+      displayName: displayName || '',
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'US'
+      },
+      preferences: {
+        notifications: true,
+        newsletter: false,
+        theme: 'auto'
+      },
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    const userDocRef = doc(db, 'users', uid);
+    await setDoc(userDocRef, userData);
+    
+    console.log('✅ User profile created successfully for:', email);
+  } catch (error) {
+    console.error('❌ Error creating user profile:', error);
+    throw error;
   }
-}
+};
 
 /**
- * Updates an existing user profile in Firestore with partial data
+ * Retrieves user profile data from Firestore
  * 
- * This function allows updating specific fields of a user profile without
- * affecting other fields. It uses Firestore's updateDoc function for efficient
- * partial updates rather than overwriting the entire document.
- * 
- * @param id - Unique identifier of the user to update
- * @param updateData - Object containing only the fields to update
- * @returns Promise<Partial<UserProfile>> - Returns the updated data for confirmation
- * @throws Will throw an error if the Firestore update operation fails
- * 
- * @example
- * ```typescript
- * // Update only the name field
- * const result = await updateUserProfile('user123', { name: 'New Name' });
- * 
- * // Update multiple fields
- * const result = await updateUserProfile('user123', {
- *   name: 'John Doe',
- *   address: '456 Updated Street'
- * });
- * ```
+ * @param uid - User identifier to fetch
+ * @returns Promise<UserProfile | null> - User profile or null if not found
+ * @throws Error if retrieval fails
  */
-export async function updateUserProfile(
-  id: string, 
-  updateData: Partial<UserProfile>
-): Promise<Partial<UserProfile>> {
-  // Create a reference to the specific user document
-  const userRef = doc(db, 'users', id);
-  
-  // Update only the specified fields in Firestore
-  await updateDoc(userRef, updateData);
-  
-  // Return the updated data for confirmation
-  return updateData;
-}
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userDocRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data() as UserProfile;
+      // Convert Firestore Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      return data;
+    }
+    
+    console.log('No user profile found for UID:', uid);
+    return null;
+  } catch (error) {
+    console.error('❌ Error fetching user profile:', error);
+    throw error;
+  }
+};
 
 /**
- * Deletes a user profile from Firestore
+ * Updates existing user profile in Firestore
  * 
- * This function permanently removes a user document from the 'users' collection.
- * This operation is irreversible, so it should be used with caution and proper
- * user confirmation in the UI.
- * 
- * @param id - Unique identifier of the user to delete
- * @returns Promise<boolean> - Returns true if deletion was successful
- * @throws Will throw an error if the Firestore delete operation fails
- * 
- * @example
- * ```typescript
- * // Delete a user profile
- * const success = await deleteUserProfile('user123');
- * if (success) {
- *   console.log('User profile deleted successfully');
- * }
- * ```
+ * @param uid - User identifier
+ * @param updates - Partial user profile data to update
+ * @returns Promise that resolves when update is complete
+ * @throws Error if update fails
  */
-export async function deleteUserProfile(id: string): Promise<boolean> {
-  // Create a reference to the specific user document
-  const userRef = doc(db, 'users', id);
+export const updateUserProfile = async (
+  uid: string, 
+  updates: Partial<UserProfile>
+): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    
+    // Add updatedAt timestamp
+    const updateData = {
+      ...updates,
+      updatedAt: new Date()
+    };
+    
+    await updateDoc(userDocRef, updateData);
+    console.log('✅ User profile updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating user profile:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deletes user profile from Firestore (soft delete recommended)
+ * 
+ * @param uid - User identifier to delete
+ * @returns Promise that resolves when deletion is complete
+ * @throws Error if deletion fails
+ */
+export const deleteUserProfile = async (uid: string): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    await deleteDoc(userDocRef);
+    
+    console.log('✅ User profile deleted successfully');
+  } catch (error) {
+    console.error('❌ Error deleting user profile:', error);
+    throw error;
+  }
+};
+
+/**
+ * Complete user account deletion (profile + auth)
+ * WARNING: This permanently deletes the user's Firebase Auth account
+ * 
+ * @param user - Firebase Auth User object
+ * @returns Promise that resolves when complete deletion is done
+ * @throws Error if deletion fails
+ */
+export const deleteCompleteUserAccount = async (user: User): Promise<void> => {
+  try {
+    // First delete the Firestore profile
+    await deleteUserProfile(user.uid);
+    
+    // Then delete the Firebase Auth account
+    await deleteUser(user);
+    
+    console.log('✅ Complete user account deleted successfully');
+  } catch (error) {
+    console.error('❌ Error deleting complete user account:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all users (Admin function - use carefully)
+ * 
+ * @returns Promise<UserProfile[]> - Array of all user profiles
+ * @throws Error if retrieval fails
+ */
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const usersCollection = collection(db, 'users');
+    const querySnapshot = await getDocs(usersCollection);
+    
+    const users: UserProfile[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as UserProfile;
+      // Convert Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      users.push(data);
+    });
+    
+    return users;
+  } catch (error) {
+    console.error('❌ Error fetching all users:', error);
+    throw error;
+  }
+};
+
+/**
+ * Search users by email
+ * 
+ * @param email - Email to search for
+ * @returns Promise<UserProfile | null> - User profile or null
+ * @throws Error if search fails
+ */
+export const getUserByEmail = async (email: string): Promise<UserProfile | null> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      const data = doc.data() as UserProfile;
+      
+      // Convert Timestamps to Dates
+      if (data.createdAt instanceof Timestamp) {
+        data.createdAt = data.createdAt.toDate();
+      }
+      if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+      }
+      
+      return data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ Error searching user by email:', error);
+    throw error;
+  }
+};
+
+/**
+ * Validates user profile data before operations
+ * 
+ * @param profile - User profile to validate
+ * @returns boolean - True if valid, false otherwise
+ */
+export const validateUserProfile = (profile: Partial<UserProfile>): boolean => {
+  if (!profile.email) {
+    console.error('Validation failed: Email is required');
+    return false;
+  }
   
-  // Delete the document from Firestore
-  await deleteDoc(userRef);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(profile.email)) {
+    console.error('Validation failed: Invalid email format');
+    return false;
+  }
   
-  // Return true to confirm successful deletion
   return true;
-}
+};
+
+/**
+ * Update user preferences
+ * 
+ * @param uid - User identifier
+ * @param preferences - New preferences
+ * @returns Promise that resolves when update is complete
+ */
+export const updateUserPreferences = async (
+  uid: string,
+  preferences: Partial<UserProfile['preferences']>
+): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    await updateDoc(userDocRef, {
+      preferences,
+      updatedAt: new Date()
+    });
+    
+    console.log('✅ User preferences updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating user preferences:', error);
+    throw error;
+  }
+};

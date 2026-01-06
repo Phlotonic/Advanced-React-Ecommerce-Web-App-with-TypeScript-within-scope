@@ -14,7 +14,7 @@ import React, { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 /**
- * Futuristic form styling with advanced CSS effects
+ * Digital/16-bit styling with black and gold theme
  */
 const styles = {
   form: {
@@ -30,28 +30,30 @@ const styles = {
   input: {
     width: '100%',
     padding: '16px 20px',
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
+    background: 'rgba(0, 0, 0, 0.6)',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
     backdropFilter: 'blur(10px)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     outline: 'none',
-    boxSizing: 'border-box' as const
+    boxSizing: 'border-box' as const,
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   inputFocused: {
-    border: '1px solid rgba(255, 255, 255, 0.5)',
-    background: 'rgba(255, 255, 255, 0.15)',
-    boxShadow: '0 0 20px rgba(255, 255, 255, 0.1), 0 0 40px rgba(138, 43, 226, 0.2)',
+    border: '2px solid rgba(255, 215, 0, 0.7)',
+    background: 'rgba(0, 0, 0, 0.8)',
+    boxShadow: '0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.1)',
     transform: 'translateY(-2px)'
   },
 
   placeholder: {
     '::placeholder': {
-      color: 'rgba(255, 255, 255, 0.6)',
-      fontSize: '16px'
+      color: 'rgba(255, 215, 0, 0.5)',
+      fontSize: 'clamp(14px, 3vw, 16px)'
     }
   },
 
@@ -59,77 +61,87 @@ const styles = {
     position: 'absolute' as const,
     left: '20px',
     top: '16px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: '16px',
+    color: 'rgba(255, 215, 0, 0.6)',
+    fontSize: 'clamp(14px, 3vw, 16px)',
     transition: 'all 0.3s ease',
     pointerEvents: 'none' as const,
-    background: 'transparent'
+    background: 'transparent',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   labelFocused: {
-    top: '-8px',
-    fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.9)',
-    background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8))',
-    padding: '2px 8px',
-    borderRadius: '6px',
-    backdropFilter: 'blur(10px)'
+    top: '-12px',
+    fontSize: 'clamp(10px, 2.5vw, 12px)',
+    color: '#ffd700',
+    background: 'linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7))',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255, 215, 0, 0.3)',
+    textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
   },
 
   submitButton: {
     padding: '16px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: '600',
+    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+    border: '2px solid rgba(255, 215, 0, 0.5)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontWeight: '700',
     cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     position: 'relative' as const,
     overflow: 'hidden',
     textTransform: 'uppercase' as const,
-    letterSpacing: '1px'
+    letterSpacing: '2px',
+    fontFamily: 'monospace, "Courier New"',
+    boxShadow: '0 0 15px rgba(255, 215, 0, 0.2)'
   },
 
   submitButtonHover: {
-    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1))',
+    border: '2px solid rgba(255, 215, 0, 0.8)',
     transform: 'translateY(-2px)',
-    boxShadow: '0 10px 30px rgba(102, 126, 234, 0.4)'
+    boxShadow: '0 0 25px rgba(255, 215, 0, 0.4)',
+    textShadow: '0 0 10px rgba(255, 215, 0, 0.6)'
   },
 
   buttonRipple: {
     position: 'absolute' as const,
     borderRadius: '50%',
-    background: 'rgba(255, 255, 255, 0.3)',
+    background: 'rgba(255, 215, 0, 0.3)',
     transform: 'scale(0)',
     animation: 'ripple 0.6s linear'
   },
 
   error: {
-    color: '#ff6b6b',
-    fontSize: '14px',
+    color: '#ff4444',
+    fontSize: 'clamp(12px, 2.5vw, 14px)',
     marginTop: '8px',
     padding: '12px',
-    background: 'rgba(255, 107, 107, 0.1)',
-    border: '1px solid rgba(255, 107, 107, 0.3)',
-    borderRadius: '8px',
+    background: 'rgba(255, 68, 68, 0.1)',
+    border: '1px solid rgba(255, 68, 68, 0.4)',
+    borderRadius: '6px',
     backdropFilter: 'blur(10px)',
-    animation: 'errorSlide 0.3s ease-out'
+    animation: 'errorSlide 0.3s ease-out',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   loadingSpinner: {
     width: '20px',
     height: '20px',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderTop: '2px solid white',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
+    borderTop: '2px solid #ffd700',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginRight: '8px'
   }
 };
 
-// Additional CSS animations
+// Additional CSS animations with digital theme
 const LoginStyles = () => (
   <style>
     {`
@@ -147,7 +159,7 @@ const LoginStyles = () => (
         100% { transform: rotate(360deg); }
       }
 
-      .futuristic-input:focus::placeholder {
+      .digital-input:focus::placeholder {
         color: transparent;
       }
 
@@ -236,7 +248,7 @@ const Login: React.FC = () => {
               ...styles.input,
               ...(focusedField === 'email' || email ? styles.inputFocused : {})
             }}
-            className="futuristic-input"
+            className="digital-input"
             required
           />
           <label
@@ -262,7 +274,7 @@ const Login: React.FC = () => {
               ...styles.input,
               ...(focusedField === 'password' || password ? styles.inputFocused : {})
             }}
-            className="futuristic-input"
+            className="digital-input"
             required
           />
           <label

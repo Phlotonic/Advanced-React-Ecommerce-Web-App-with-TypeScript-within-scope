@@ -14,7 +14,7 @@ import React, { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 /**
- * Futuristic form styling with advanced CSS effects
+ * Digital/16-bit styling with black and gold theme
  */
 const styles = {
   form: {
@@ -30,21 +30,23 @@ const styles = {
   input: {
     width: '100%',
     padding: '16px 20px',
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
+    background: 'rgba(0, 0, 0, 0.6)',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
     backdropFilter: 'blur(10px)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     outline: 'none',
-    boxSizing: 'border-box' as const
+    boxSizing: 'border-box' as const,
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   inputFocused: {
-    border: '1px solid rgba(255, 255, 255, 0.5)',
-    background: 'rgba(255, 255, 255, 0.15)',
-    boxShadow: '0 0 20px rgba(255, 255, 255, 0.1), 0 0 40px rgba(138, 43, 226, 0.2)',
+    border: '2px solid rgba(255, 215, 0, 0.7)',
+    background: 'rgba(0, 0, 0, 0.8)',
+    boxShadow: '0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.1)',
     transform: 'translateY(-2px)'
   },
 
@@ -52,94 +54,110 @@ const styles = {
     position: 'absolute' as const,
     left: '20px',
     top: '16px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: '16px',
+    color: 'rgba(255, 215, 0, 0.6)',
+    fontSize: 'clamp(14px, 3vw, 16px)',
     transition: 'all 0.3s ease',
     pointerEvents: 'none' as const,
-    background: 'transparent'
+    background: 'transparent',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   labelFocused: {
-    top: '-8px',
-    fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.9)',
-    background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8))',
-    padding: '2px 8px',
-    borderRadius: '6px',
-    backdropFilter: 'blur(10px)'
+    top: '-12px',
+    fontSize: 'clamp(10px, 2.5vw, 12px)',
+    color: '#ffd700',
+    background: 'linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7))',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255, 215, 0, 0.3)',
+    textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
   },
 
   passwordStrength: {
-    height: '4px',
-    borderRadius: '2px',
+    height: '6px',
+    borderRadius: '3px',
     marginTop: '8px',
-    transition: 'all 0.3s ease',
-    background: 'rgba(255, 255, 255, 0.1)'
+    transition: 'all 0.4s ease',
+    background: 'rgba(0, 0, 0, 0.5)',
+    border: '1px solid rgba(255, 215, 0, 0.2)'
   },
 
   strengthWeak: {
-    background: 'linear-gradient(90deg, #ff6b6b, #ff8e53)'
+    background: 'linear-gradient(90deg, #ff4444, #ff6666)',
+    boxShadow: '0 0 10px rgba(255, 68, 68, 0.3)'
   },
 
   strengthMedium: {
-    background: 'linear-gradient(90deg, #ffd93d, #ff8e53)'
+    background: 'linear-gradient(90deg, #ff8800, #ffaa00)',
+    boxShadow: '0 0 10px rgba(255, 136, 0, 0.3)'
   },
 
   strengthStrong: {
-    background: 'linear-gradient(90deg, #6bcf7f, #4facfe)'
+    background: 'linear-gradient(90deg, #ffd700, #ffed4e)',
+    boxShadow: '0 0 15px rgba(255, 215, 0, 0.4)'
   },
 
   strengthText: {
-    fontSize: '12px',
+    fontSize: 'clamp(10px, 2.5vw, 12px)',
     marginTop: '4px',
-    color: 'rgba(255, 255, 255, 0.7)'
+    color: 'rgba(255, 215, 0, 0.8)',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   submitButton: {
     padding: '16px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
-    borderRadius: '12px',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: '600',
+    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+    border: '2px solid rgba(255, 215, 0, 0.5)',
+    borderRadius: '8px',
+    color: '#ffd700',
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontWeight: '700',
     cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     position: 'relative' as const,
     overflow: 'hidden',
     textTransform: 'uppercase' as const,
-    letterSpacing: '1px'
+    letterSpacing: '2px',
+    fontFamily: 'monospace, "Courier New"',
+    boxShadow: '0 0 15px rgba(255, 215, 0, 0.2)'
   },
 
   error: {
-    color: '#ff6b6b',
-    fontSize: '14px',
+    color: '#ff4444',
+    fontSize: 'clamp(12px, 2.5vw, 14px)',
     marginTop: '8px',
     padding: '12px',
-    background: 'rgba(255, 107, 107, 0.1)',
-    border: '1px solid rgba(255, 107, 107, 0.3)',
-    borderRadius: '8px',
+    background: 'rgba(255, 68, 68, 0.1)',
+    border: '1px solid rgba(255, 68, 68, 0.4)',
+    borderRadius: '6px',
     backdropFilter: 'blur(10px)',
-    animation: 'errorSlide 0.3s ease-out'
+    animation: 'errorSlide 0.3s ease-out',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   success: {
-    color: '#6bcf7f',
-    fontSize: '14px',
+    color: '#ffd700',
+    fontSize: 'clamp(12px, 2.5vw, 14px)',
     marginTop: '8px',
     padding: '12px',
-    background: 'rgba(107, 207, 127, 0.1)',
-    border: '1px solid rgba(107, 207, 127, 0.3)',
-    borderRadius: '8px',
+    background: 'rgba(255, 215, 0, 0.1)',
+    border: '1px solid rgba(255, 215, 0, 0.4)',
+    borderRadius: '6px',
     backdropFilter: 'blur(10px)',
-    animation: 'successSlide 0.3s ease-out'
+    animation: 'successSlide 0.3s ease-out',
+    fontFamily: 'monospace, "Courier New"',
+    letterSpacing: '1px'
   },
 
   loadingSpinner: {
     width: '20px',
     height: '20px',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderTop: '2px solid white',
+    border: '2px solid rgba(255, 215, 0, 0.3)',
+    borderTop: '2px solid #ffd700',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginRight: '8px'
@@ -165,7 +183,7 @@ const RegisterStyles = () => (
         100% { transform: rotate(360deg); }
       }
 
-      .futuristic-input:focus::placeholder {
+      .digital-input:focus::placeholder {
         color: transparent;
       }
 
@@ -299,7 +317,7 @@ const Register: React.FC = () => {
               ...styles.input,
               ...(focusedField === 'email' || email ? styles.inputFocused : {})
             }}
-            className="futuristic-input"
+            className="digital-input"
             required
           />
           <label
@@ -325,7 +343,7 @@ const Register: React.FC = () => {
               ...styles.input,
               ...(focusedField === 'password' || password ? styles.inputFocused : {})
             }}
-            className="futuristic-input"
+            className="digital-input"
             required
           />
           <label
@@ -364,9 +382,9 @@ const Register: React.FC = () => {
             style={{
               ...styles.input,
               ...(focusedField === 'confirmPassword' || confirmPassword ? styles.inputFocused : {}),
-              ...(confirmPassword && password !== confirmPassword ? { border: '1px solid #ff6b6b' } : {})
+              ...(confirmPassword && password !== confirmPassword ? { border: '2px solid #ff4444' } : {})
             }}
-            className="futuristic-input"
+            className="digital-input"
             required
           />
           <label

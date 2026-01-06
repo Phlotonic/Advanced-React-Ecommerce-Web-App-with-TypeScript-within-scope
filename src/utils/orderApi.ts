@@ -6,7 +6,6 @@
  * Implements Firebase Firestore integration with proper error handling.
  * 
  * @fileoverview Order CRUD operations with Firebase Firestore
- * @author Your Team
  * @version 1.0.0
  * @see {@link https://firebase.google.com/docs/firestore} Firebase Firestore Documentation
  */

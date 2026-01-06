@@ -43,10 +43,18 @@ const cartSlice = createSlice({
                 state.items.push({ ...productToAdd, quantity: 1 });
             }
         },
-        removeItem: (state: CartState, action: PayloadAction<number>) => {
+        removeItem: (state: CartState, action: PayloadAction<string | number>) => {
             state.items = state.items.filter(item => item.id !== action.payload)
         }, // "Replace the current items array with a new array 
         // that has filtered out the item we want to remove."
+
+        updateQuantity: (state: CartState, action: PayloadAction<{id: string | number, quantity: number}>) => {
+            const { id, quantity } = action.payload;
+            const existingItem = state.items.find(item => item.id === id);
+            if (existingItem) {
+                existingItem.quantity = quantity;
+            }
+        },
 
         clearCart: (state) => {
             state.items = [];
@@ -54,7 +62,7 @@ const cartSlice = createSlice({
     },
 });
 
-export const { addItem, removeItem, clearCart } = cartSlice.actions;
+export const { addItem, removeItem, updateQuantity, clearCart } = cartSlice.actions;
 // to dispatch the action to the store
 export default cartSlice.reducer;
 // combine all of the slice reducers into the single main app reducer

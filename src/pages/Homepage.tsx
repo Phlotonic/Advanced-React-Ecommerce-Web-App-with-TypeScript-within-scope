@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts, fetchCategories, fetchProductsByCategory } from '../api';
+import { 
+  getAllProducts, 
+  getAllCategories, 
+  getProductsByCategory 
+} from '../utils/productApi';
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types/product';
 
-// Define the Homepage component
+/**
+ * Homepage component - displays product catalog from Firebase
+ * Implements requirements: fetch products from Firestore with category filtering
+ */
 const Homepage = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  // Initialize with an empty string, which we can use to mean "All Categories"
-const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  // query for all products
+  // Query for Firebase products
   const {
     data: productsData,
     isLoading: isLoadingProducts,
@@ -20,75 +25,162 @@ const [selectedCategory, setSelectedCategory] = useState<string>('');
     queryKey: ['products', selectedCategory || 'all'],
     queryFn: async () => {
       if (selectedCategory) {
-        return fetchProductsByCategory(selectedCategory);
+        return await getProductsByCategory(selectedCategory);
       } else {
-        return fetchProducts();
+        return await getAllProducts();
       }
     },
+    retry: 2,
+    retryDelay: 1000
   });
 
   // Query for categories
   const {
-    data: categoriesData, // Our string[] of categories
+    data: categoriesData,
     isLoading: isLoadingCategories,
     isError: isErrorCategories,
-    error: errorCategories,
   } = useQuery<string[], Error>({
     queryKey: ['categories'],
-    queryFn: fetchCategories,
+    queryFn: async () => {
+      return await getAllCategories();
+    },
+    retry: 2,
+    retryDelay: 1000
   });
 
-  // Combined loading state for products
-  if (isLoadingProducts || !productsData) {
-    return <span>Loading products...</span>;
+  // Loading state
+  if (isLoadingProducts) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '200px',
+        color: '#667eea',
+        fontSize: '18px'
+      }}>
+        <div>Loading products...</div>
+      </div>
+    );
   }
-  
-  // Error state for products
+
+  // Error state
   if (isErrorProducts) {
-    const errorMessage = errorProducts instanceof Error ? errorProducts.message : 'An unknown error occurred';
-    return <span>Error fetching products: {errorMessage}</span>;
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '200px',
+        color: '#dc3545',
+        fontSize: '16px',
+        flexDirection: 'column',
+        gap: '10px'
+      }}>
+        <div>Error loading products</div>
+        <div style={{ fontSize: '14px', color: '#666' }}>
+          {errorProducts?.message || 'Please try again later'}
+        </div>
+      </div>
+    );
   }
   
-const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCategory(event.target.value);
-    // For now, let's just log it to see it working:
-    console.log("Selected category:", event.target.value);
-    // Later, we'll use this value to filter products
   };
 
-   return (
-    <div>
-      <h1>Our Products</h1>
+  const displayProducts = productsData || [];
+
+  return (
+    <div style={{
+      padding: '20px'
+    }}>
+      <h1 style={{
+        color: '#333',
+        textAlign: 'center',
+        fontSize: '28px',
+        marginBottom: '30px'
+      }}>
+        Product Catalog
+      </h1>
 
       {/* Category Dropdown */}
-      <div>
-        <label htmlFor="category-select">Filter by Category: </label>
+      <div style={{
+        marginBottom: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        flexWrap: 'wrap'
+      }}>
+        <label 
+          htmlFor="category-select"
+          style={{
+            color: '#333',
+            fontSize: '16px'
+          }}
+        >
+          Filter by Category:
+        </label>
         <select
           id="category-select"
-          value={selectedCategory} // Controlled component: value is tied to state
-          onChange={handleCategoryChange} // Function to call when selection changes
-          disabled={isLoadingCategories} // Disable dropdown while categories are loading
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+          disabled={isLoadingCategories}
+          style={{
+            padding: '10px 16px',
+            background: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '6px',
+            color: '#333',
+            fontSize: '14px',
+            cursor: 'pointer',
+            minWidth: '200px'
+          }}
         >
-          <option value="">All Categories</option> {/* Default option */}
-          {/* Render options if categories have loaded successfully */}
+          <option value="">All Categories</option>
           {isErrorCategories && (
             <option value="" disabled>Error loading categories</option>
           )}
           {categoriesData && categoriesData.map((category) => (
             <option key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)} {/* Capitalize for display */}
+              {category.charAt(0).toUpperCase() + category.slice(1)}
             </option>
           ))}
         </select>
-        {isLoadingCategories && <p>Loading categories...</p>}
+        {isLoadingCategories && (
+          <p style={{
+            color: '#666',
+            fontSize: '14px'
+          }}>
+            Loading categories...
+          </p>
+        )}
       </div>
 
       {/* Product Listing Area*/}
-      <div style={{ marginTop: '20px' }}>
-        {/* Map over 'productsData' to render each product */}
-        {productsData.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+      <div style={{ 
+        marginTop: '20px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px'
+      }}>
+        {displayProducts.length === 0 ? (
+          <div style={{
+            gridColumn: '1 / -1',
+            textAlign: 'center',
+            color: '#666',
+            fontSize: '18px',
+            padding: '40px',
+            border: '1px dashed #ddd',
+            borderRadius: '8px'
+          }}>
+            No products available
+          </div>
+        ) : (
+          displayProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        )}
       </div>
     </div>
   );
