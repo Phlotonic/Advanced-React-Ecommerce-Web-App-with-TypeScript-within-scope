@@ -126,11 +126,11 @@ export const getProduct = async (productId: string): Promise<Product | null> => 
 };
 
 /**
- * Retrieves all products from Firestore
+ * Retrieves all products from Firestore with FakeStore API fallback
+ * If Firestore fails due to permissions, automatically falls back to FakeStore API
  * 
- * @param activeOnly - If true, only return active products
+ * @param activeOnly - If true, only return active products (Firestore only)
  * @returns Promise<Product[]> - Array of all products
- * @throws Error if retrieval fails
  */
 export const getAllProducts = async (activeOnly: boolean = true): Promise<Product[]> => {
   try {
@@ -162,11 +162,40 @@ export const getAllProducts = async (activeOnly: boolean = true): Promise<Produc
       } as Product);
     });
     
-    console.log(`✅ Retrieved ${products.length} products`);
+    console.log(`✅ Retrieved ${products.length} products from Firestore`);
     return products;
   } catch (error) {
-    console.error('❌ Error fetching all products:', error);
-    throw error;
+    console.error('⚠️  Firestore error, falling back to FakeStore API:', error);
+    
+    // Fallback to FakeStore API
+    try {
+      const response = await fetch('https://fakestoreapi.com/products');
+      if (!response.ok) {
+        throw new Error(`FakeStore API error: ${response.status}`);
+      }
+      
+      const fakeStoreProducts = await response.json();
+      
+      // Transform FakeStore products to match our Product type
+      const products: Product[] = fakeStoreProducts.map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        image: item.image,
+        tags: [item.category],
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+      
+      console.log(`✅ Retrieved ${products.length} products from FakeStore API (fallback)`);
+      return products;
+    } catch (fallbackError) {
+      console.error('❌ Both Firestore and FakeStore API failed:', fallbackError);
+      throw new Error('Failed to load products from both Firestore and FakeStore API');
+    }
   }
 };
 
@@ -205,7 +234,7 @@ export const updateProduct = async (
 };
 
 /**
- * Retrieves products by category
+ * Retrieves products by category with FakeStore API fallback
  * 
  * @param category - Product category to filter by
  * @param activeOnly - If true, only return active products
@@ -252,8 +281,37 @@ export const getProductsByCategory = async (
     console.log(`✅ Retrieved ${products.length} products in category: ${category}`);
     return products;
   } catch (error) {
-    console.error('❌ Error fetching products by category:', error);
-    throw error;
+    console.error('⚠️  Firestore category query failed, falling back to FakeStore API:', error);
+    
+    // Fallback to FakeStore API with category filter
+    try {
+      const response = await fetch(`https://fakestoreapi.com/products/category/${category}`);
+      if (!response.ok) {
+        throw new Error(`FakeStore API error: ${response.status}`);
+      }
+      
+      const fakeStoreProducts = await response.json();
+      
+      // Transform FakeStore products to match our Product type
+      const products: Product[] = fakeStoreProducts.map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        image: item.image,
+        tags: [item.category],
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+      
+      console.log(`✅ Retrieved ${products.length} products in category: ${category} (from FakeStore fallback)`);
+      return products;
+    } catch (fallbackError) {
+      console.error('❌ Both Firestore and FakeStore API failed for category:', fallbackError);
+      throw new Error(`Failed to load products for category "${category}"`);
+    }
   }
 };
 
@@ -309,7 +367,7 @@ export const searchProducts = async (
 };
 
 /**
- * Get all unique categories
+ * Get all unique categories with FakeStore API fallback
  * 
  * @returns Promise<string[]> - Array of category names
  */
@@ -321,8 +379,23 @@ export const getAllCategories = async (): Promise<string[]> => {
     console.log(`✅ Retrieved ${categories.length} categories`);
     return categories.sort();
   } catch (error) {
-    console.error('❌ Error fetching categories:', error);
-    throw error;
+    console.error('⚠️  Error fetching categories from products, trying FakeStore categories endpoint:', error);
+    
+    try {
+      // Try FakeStore API categories endpoint
+      const response = await fetch('https://fakestoreapi.com/products/categories');
+      if (!response.ok) {
+        throw new Error(`FakeStore API error: ${response.status}`);
+      }
+      
+      const categories = await response.json();
+      console.log(`✅ Retrieved ${categories.length} categories from FakeStore API (fallback)`);
+      return categories.sort();
+    } catch (fallbackError) {
+      console.error('❌ Failed to get categories from both sources:', fallbackError);
+      // Return empty array as last resort
+      return [];
+    }
   }
 };
 

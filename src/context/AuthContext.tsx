@@ -59,6 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // State to track the currently authenticated user
   const [user, setUser] = useState<User | null>(null);
 
+  console.log('🔐 AuthProvider mounted, initializing auth state listener');
+
   /**
    * Set up Firebase Auth State Listener
    * 
@@ -68,12 +70,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
   useEffect(() => {
     // Subscribe to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user); // Update user state when auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      console.log('🔐 Auth state changed:', authUser ? `Logged in as ${authUser.email}` : 'Logged out');
+      setUser(authUser); // Update user state when auth state changes
     });
     
     // Cleanup function: unsubscribe from auth state listener when component unmounts
-    return () => unsubscribe();
+    return () => {
+      console.log('🔐 Cleaning up auth state listener');
+      unsubscribe();
+    };
   }, []); // Empty dependency array - this effect runs only once
 
   /**

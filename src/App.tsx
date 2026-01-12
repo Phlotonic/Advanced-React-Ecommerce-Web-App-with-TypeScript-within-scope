@@ -25,25 +25,34 @@ import ShoppingCart from "./components/shopping cart/ShoppingCart";
 const appStyles = {
   loggedInContainer: {
     minHeight: '100vh',
+    width: '100%',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    backgroundSize: '100% 100%'
+    backgroundSize: '100% 100%',
+    backgroundAttachment: 'fixed',
+    boxSizing: 'border-box' as const,
+    display: 'flex',
+    flexDirection: 'column' as const
   },
 
   header: {
     background: 'rgba(255, 255, 255, 0.95)',
     borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-    padding: '20px 40px',
+    padding: 'clamp(15px, 4vw, 20px) clamp(20px, 5vw, 40px)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap' as const,
+    gap: '15px',
     position: 'sticky' as const,
     top: 0,
     zIndex: 100,
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    boxSizing: 'border-box' as const
   },
 
   logo: {
-    fontSize: '24px',
+    fontSize: 'clamp(18px, 4vw, 24px)',
     fontWeight: '700',
     color: '#333',
     letterSpacing: '-0.5px'
@@ -52,9 +61,10 @@ const appStyles = {
   userInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '20px',
+    gap: 'clamp(10px, 3vw, 20px)',
     color: '#333',
-    fontSize: '16px'
+    fontSize: 'clamp(14px, 3vw, 16px)',
+    flexWrap: 'wrap' as const
   },
 
   welcomeText: {
@@ -62,26 +72,32 @@ const appStyles = {
     padding: '8px 16px',
     borderRadius: '20px',
     border: '1px solid rgba(102, 126, 234, 0.2)',
-    color: '#333'
+    color: '#333',
+    whiteSpace: 'nowrap' as const
   },
 
   mainContent: {
-    padding: '40px',
+    padding: 'clamp(20px, 5vw, 40px)',
     maxWidth: '1200px',
-    margin: '0 auto'
+    margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    flex: 1
   },
 
   section: {
     background: 'white',
     borderRadius: '12px',
     marginBottom: '30px',
-    padding: '30px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+    padding: 'clamp(20px, 5vw, 30px)',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    boxSizing: 'border-box' as const
   },
 
   sectionTitle: {
     color: '#333',
-    fontSize: '24px',
+    fontSize: 'clamp(20px, 5vw, 24px)',
     fontWeight: '600',
     marginBottom: '20px',
     textAlign: 'center' as const
@@ -129,8 +145,11 @@ const AppStyles = () => (
 const AppContent = () => {
   const { user } = useAuth();
 
+  console.log('🔄 AppContent rendering, user state:', user ? `Logged in as ${user.email}` : 'Not logged in');
+
   // Show authentication forms if user is not logged in
   if (!user) {
+    console.log('📝 Rendering auth form (not logged in)');
     return (
       <>
         <AppStyles />
@@ -140,6 +159,7 @@ const AppContent = () => {
   }
 
   // Show main e-commerce app when user is logged in
+  console.log('✅ Rendering logged-in app');
   return (
     <>
       <AppStyles />
@@ -152,7 +172,7 @@ const AppContent = () => {
             <div style={appStyles.welcomeText}>
               Welcome, {user.email?.split('@')[0]}
             </div>
-            <AuthForm />
+            <AuthForm isHeaderContext={true} />
           </div>
         </header>
         

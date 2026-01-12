@@ -159,11 +159,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <div style={cardStyles.infoItem}>
             <strong>Category:</strong> {product.category}
           </div>
-          <div style={cardStyles.infoItem}>
-            <strong>Rating:</strong> 
-            <span style={cardStyles.ratingStars}> {renderStars(product.rating.rate)}</span>
-            <span> ({product.rating.count} reviews)</span>
-          </div>
+          {product.rating && product.rating.rate && (
+            <div style={cardStyles.infoItem}>
+              <strong>Rating:</strong> 
+              <span style={cardStyles.ratingStars}> {renderStars(product.rating.rate)}</span>
+              <span> ({product.rating.count || 0} reviews)</span>
+            </div>
+          )}
         </div>
         
         <div style={cardStyles.price}>

@@ -161,19 +161,33 @@ const styles = {
   },
 
   logoutButton: {
-    padding: '14px 28px',
+    padding: 'clamp(8px, 2vw, 14px) clamp(14px, 3vw, 28px)',
     background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1))',
     border: '2px solid rgba(255, 215, 0, 0.5)',
     borderRadius: '8px',
     color: '#ffd700',
-    fontSize: 'clamp(14px, 3vw, 16px)',
+    fontSize: 'clamp(12px, 2.5vw, 14px)',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.4s ease',
     fontFamily: 'monospace, "Courier New"',
     letterSpacing: '1px',
     textTransform: 'uppercase' as const,
-    boxShadow: '0 0 20px rgba(255, 215, 0, 0.2)'
+    boxShadow: '0 0 20px rgba(255, 215, 0, 0.2)',
+    whiteSpace: 'nowrap' as const
+  },
+
+  headerLogoutButton: {
+    padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+    background: '#ff6b6b',
+    border: '1px solid #cc0000',
+    borderRadius: '6px',
+    color: 'white',
+    fontSize: 'clamp(12px, 2.5vw, 14px)',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    whiteSpace: 'nowrap' as const
   }
 };
 
@@ -258,7 +272,7 @@ const AnimationStyles = () => (
   </style>
 );
 
-const AuthForm: React.FC = () => {
+const AuthForm: React.FC<{ isHeaderContext?: boolean }> = ({ isHeaderContext = false }) => {
   const { user, logout } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
@@ -313,7 +327,21 @@ const AuthForm: React.FC = () => {
     return <div style={styles.floatingShapes}>{shapes}</div>;
   };
 
-  if (user) {
+  // When used in header context and user is logged in, show simple logout button
+  if (isHeaderContext && user) {
+    return (
+      <button
+        style={styles.headerLogoutButton}
+        onClick={logout}
+        title="Sign out of your account"
+      >
+        Sign Out
+      </button>
+    );
+  }
+
+  // Full page auth form when user is not logged in
+  if (!user) {
     return (
       <>
         <AnimationStyles />
@@ -321,59 +349,38 @@ const AuthForm: React.FC = () => {
           <div style={styles.parallaxOverlay} />
           <FloatingShapes />
           <div style={styles.authCard} className="auth-card">
-            <div style={styles.welcomeContainer}>
-              <div style={styles.welcomeText}>
-                Welcome back, {user.email?.split('@')[0]}!
-              </div>
-              <button
-                style={styles.logoutButton}
-                className="logout-btn"
-                onClick={logout}
-              >
-                Sign Out
-              </button>
+            <div style={styles.header}>
+              <h1 style={styles.title}>
+                {showRegister ? 'Join Us' : 'Welcome Back'}
+              </h1>
+              <p style={styles.subtitle}>
+                {showRegister 
+                  ? 'Create your account to start shopping' 
+                  : 'Sign in to your account'}
+              </p>
             </div>
+            
+            <div style={styles.formContainer}>
+              {showRegister ? <Register /> : <Login />}
+            </div>
+            
+            <button
+              style={styles.toggleButton}
+              className="toggle-btn"
+              onClick={() => setShowRegister(!showRegister)}
+            >
+              {showRegister 
+                ? "Already have an account? Sign In" 
+                : "New here? Create Account"}
+            </button>
           </div>
         </div>
       </>
     );
   }
 
-  return (
-    <>
-      <AnimationStyles />
-      <div style={styles.container}>
-        <div style={styles.parallaxOverlay} />
-        <FloatingShapes />
-        <div style={styles.authCard} className="auth-card">
-          <div style={styles.header}>
-            <h1 style={styles.title}>
-              {showRegister ? 'Join Us' : 'Welcome Back'}
-            </h1>
-            <p style={styles.subtitle}>
-              {showRegister 
-                ? 'Create your account to start shopping' 
-                : 'Sign in to your account'}
-            </p>
-          </div>
-          
-          <div style={styles.formContainer}>
-            {showRegister ? <Register /> : <Login />}
-          </div>
-          
-          <button
-            style={styles.toggleButton}
-            className="toggle-btn"
-            onClick={() => setShowRegister(!showRegister)}
-          >
-            {showRegister 
-              ? "Already have an account? Sign In" 
-              : "New here? Create Account"}
-          </button>
-        </div>
-      </div>
-    </>
-  );
+  // When user is logged in but not in header context, return null
+  return null;
 };
 
 export default AuthForm;
